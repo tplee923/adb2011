@@ -20,42 +20,40 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-
-
 public class ISearch {
-	
-	public static String formSearchURL(String s){
-		String yahooID="rguvpRTV34EZev_Dpa.oJXPIUtqRiQglLqSaTSxw2I1vCIc6TobhS_NjLyINdlm.M2DV5KMbeoPN2QgUEa3nucgd5wcBvsE-"; 
+
+	public static String formSearchURL(String s) {
+		String yahooID = "rguvpRTV34EZev_Dpa.oJXPIUtqRiQglLqSaTSxw2I1vCIc6TobhS_NjLyINdlm.M2DV5KMbeoPN2QgUEa3nucgd5wcBvsE-";
 		String[] keywords = s.split(" ");
 		String finalStr = "";
-		for(int i=0; i<keywords.length;i++){
-			if(i==keywords.length-1){
-				finalStr=finalStr+keywords[i];
-			}else{
-				finalStr=finalStr+keywords[i]+"%20";
+		for (int i = 0; i < keywords.length; i++) {
+			if (i == keywords.length - 1) {
+				finalStr = finalStr + keywords[i];
+			} else {
+				finalStr = finalStr + keywords[i] + "%20";
 			}
 		}
-		String urlString = "http://boss.yahooapis.com/ysearch/web/v1/"+finalStr+"?appid="+yahooID+"&format=xml";
-		//System.out.println("Final URL:"+urlString);
+		String urlString = "http://boss.yahooapis.com/ysearch/web/v1/"
+				+ finalStr + "?appid=" + yahooID + "&format=xml";
+		// System.out.println("Final URL:"+urlString);
 		return urlString;
 	}
 
-	public static String search(String keywords){
-		String resultstring="";
+	public static String search(String keywords) {
+		String resultstring = "";
 		try {
 			URL url = new URL(formSearchURL(keywords));
 			URLConnection connection = url.openConnection();
 			connection.connect();
-			InputStreamReader in = new
-			InputStreamReader(connection.getInputStream());
+			InputStreamReader in = new InputStreamReader(
+					connection.getInputStream());
 			BufferedReader br = new BufferedReader(in);
 			String s = br.readLine();
-			while (s!=null)
-			{
+			while (s != null) {
 				resultstring += s;
 				s = br.readLine();
 			}
-			//System.out.println(resultstring);
+			// System.out.println(resultstring);
 			return resultstring;
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
@@ -65,10 +63,9 @@ public class ISearch {
 		return "";
 	}
 
+	public static HashMap AnalyzeResult(String xmlString) throws SAXException,
+			IOException, ParserConfigurationException {
 
-	public static HashMap AnalyzeResult(String xmlString)
-	throws SAXException, IOException, ParserConfigurationException {
-		
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = factory.newDocumentBuilder();
 		InputSource inStream = new org.xml.sax.InputSource();
@@ -76,116 +73,105 @@ public class ISearch {
 
 		Document doc = builder.parse(inStream);
 		NodeList nodeList = doc.getElementsByTagName("result");
-		//System.out.println(nodeList.getLength());
+		// System.out.println(nodeList.getLength());
 		HashMap<Integer, ResultObject> map = new HashMap(10);
-		for(int index=0; index < nodeList.getLength(); index++)
-		{
+		for (int index = 0; index < nodeList.getLength(); index++) {
 			String theTitle = null;
 			String theURL = null;
 			String theSummary = null;
-			
+
 			Node node = nodeList.item(index);
-			if (node.getNodeType() == Node.ELEMENT_NODE)
-			{
+			if (node.getNodeType() == Node.ELEMENT_NODE) {
 				Element element = (Element) node;
 
 				NodeList nameNode = element.getElementsByTagName("title");
-				for(int iIndex=0; iIndex< nameNode.getLength(); iIndex++)
-				{
-					if (nameNode.item(iIndex).getNodeType() ==Node.ELEMENT_NODE)
-					{
-						Element nameElement = (Element) nameNode.item(iIndex);
-						theTitle = nameElement.getFirstChild().getNodeValue().trim();
-						//System.out.println("TITLE: " + theTitle);
-					}
+
+				if (nameNode.item(0).getNodeType() == Node.ELEMENT_NODE) {
+					Element nameElement = (Element) nameNode.item(0);
+					theTitle = nameElement.getFirstChild().getNodeValue()
+							.trim();
+					// System.out.println("TITLE: " + theTitle);
 				}
 
 				nameNode = element.getElementsByTagName("url");
-				for(int iIndex=0; iIndex< nameNode.getLength(); iIndex++)
-				{
-					if (nameNode.item(iIndex).getNodeType() ==Node.ELEMENT_NODE)
-					{
-						Element nameElement = (Element) nameNode.item(iIndex);
-						theURL = nameElement.getFirstChild().getNodeValue().trim();
-						//System.out.println("URL: " + theURL);
-					}
+
+				if (nameNode.item(0).getNodeType() == Node.ELEMENT_NODE) {
+					Element nameElement = (Element) nameNode.item(0);
+					theURL = nameElement.getFirstChild().getNodeValue().trim();
+					// System.out.println("URL: " + theURL);
 				}
 
 				nameNode = element.getElementsByTagName("abstract");
-				
-					for(int iIndex=0; iIndex< nameNode.getLength(); iIndex++)
-					{
-						if (nameNode.item(iIndex).getNodeType() ==Node.ELEMENT_NODE)
-						{
-							Element nameElement = (Element) nameNode.item(iIndex);
-							if(nameElement.getFirstChild()==null){
-								theSummary="Not Available";
-							}else{
-								theSummary = nameElement.getFirstChild().getNodeValue();
-							}
-							//System.out.println("ABSTRACT: " + theSummary);
-						}
+
+				if (nameNode.item(0).getNodeType() == Node.ELEMENT_NODE) {
+					Element nameElement = (Element) nameNode.item(0);
+					if (nameElement.getFirstChild() == null) {
+						theSummary = "Not Available";
+					} else {
+						theSummary = nameElement.getFirstChild().getNodeValue();
 					}
-				
-					
-				
-				map.put(new Integer(index+1), new ResultObject(theTitle,theURL,theSummary));
+					// System.out.println("ABSTRACT: " + theSummary);
+				}
+
+				map.put(new Integer(index + 1), new ResultObject(theTitle,
+						theURL, theSummary));
 			}
 		}
 		return map;
 	}
-	
+
 	private static String readUserInput(String prompt) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.print(prompt);
-        return scanner.nextLine();
-    }
-	
-	public static String improveResult(){
-		//TODO
+		Scanner scanner = new Scanner(System.in);
+		System.out.print(prompt);
+		return scanner.nextLine();
+	}
+
+	public static String improveResult() {
+		// TODO
 		return "new search";
 	}
-	
-	public static void doSearch(String keywords, int expectedPrecision){
+
+	public static void doSearch(String keywords, int expectedPrecision) {
 		String s = ISearch.search(keywords);
 		try {
 			HashMap map = ISearch.AnalyzeResult(s);
-			if(map.size()==10){ 
-				Iterator iter = map.entrySet().iterator(); 
-				while (iter.hasNext()) { 
-				    Map.Entry entry = (Map.Entry) iter.next(); 
-				    Integer key = (Integer)entry.getKey(); 
-				    ResultObject val = (ResultObject)entry.getValue();
-				    System.out.println(key);
-				    System.out.println(val);
-				} 
+			if (map.size() == 10) {
+				Iterator iter = map.entrySet().iterator();
+				while (iter.hasNext()) {
+					Map.Entry entry = (Map.Entry) iter.next();
+					Integer key = (Integer) entry.getKey();
+					ResultObject val = (ResultObject) entry.getValue();
+					System.out.println(key);
+					System.out.println(val);
+				}
 			}
-		String feedback = readUserInput("Input format: index1 index2 index3\nPlease input indexes of right results:");	
-		String[] precisions = feedback.trim().split(" ");
-		int actualResult=precisions.length;
-		//System.out.println("Actual number of good results:" + actualResult);
-		if(actualResult<expectedPrecision){
-			System.out.println("NEED TO DO MORE SEARCH");
-			String newKeywords = improveResult();
-			doSearch(newKeywords,expectedPrecision);
-		}else{
-			System.out.println("Jobs Done, thanks for trying ISearch.");
-		}
+			String feedback = readUserInput("Input format: index1 index2 index3\nPlease input indexes of right results:");
+			String[] precisions = feedback.trim().split(" ");
+			int actualResult = precisions.length;
+			// System.out.println("Actual number of good results:" +
+			// actualResult);
+			if (actualResult < expectedPrecision) {
+				System.out.println("NEED TO DO MORE SEARCH");
+				String newKeywords = improveResult();
+				doSearch(newKeywords, expectedPrecision);
+			} else {
+				System.out.println("Jobs Done, thanks for trying ISearch.");
+			}
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		} 
+		}
 	}
-
 
 	public static void main(String[] args) {
 		String str = readUserInput("Input format: keyword1 keyword2,precision\nPlease input string:");
 		String[] array = str.split(",");
 		String keywords = array[0];
 		String strPrecisioin = array[1];
-		int expectedPrecision = (int)(new Double(strPrecisioin).doubleValue()*10);
-		//System.out.println("Expected number of good results:" + expectedPrecision);
-		doSearch(keywords,expectedPrecision);
+		int expectedPrecision = (int) (new Double(strPrecisioin).doubleValue() * 10);
+		// System.out.println("Expected number of good results:" +
+		// expectedPrecision);
+		doSearch(keywords, expectedPrecision);
 	}
 
 }
