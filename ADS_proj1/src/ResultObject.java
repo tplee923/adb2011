@@ -27,7 +27,7 @@ public class ResultObject {
 	}
 	
 	public String toString(){
-		return "Title:"+title + "\n" +"URL:" + url+ "\n" + "Summary:" + summary +"\n"; 
+		return "URL:" + url+ "\n" + "Title:"+title + "\n" + "Summary:" + summary +"\n"; 
 	}
 	
 	private String title;
